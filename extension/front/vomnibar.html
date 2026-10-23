@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html data-version="1.73" lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vomnibar · Dense</title>
+<!--
+  Dense: an information-dense Vomnibar page for Vimium C (extension build).
+
+  Vimium C on Chrome only accepts a custom Vomnibar page that lives inside an
+  extension, so this folder is a tiny unpacked extension. See README.md.
+  vomnibar.js is NOT included: copy it from your installed Vimium C so the
+  versions match (README step 1).
+-->
+<style>
+/* ---------- tokens (light); dark lives in <style id="dark"> ---------- */
+body{
+  --bg:#f7f8fa; --bar:#ffffff; --row:#ffffff; --fg:#1b1f27; --muted:#6a7280; --faint:#9aa1ad;
+  --line:#e6e8ee; --hover:#f1f4fa; --sel:#e4ebff; --accent:#3157d5; --accent-fg:#ffffff;
+  --t-tab:#3d6be8; --t-bm:#c98a12; --t-hist:#8890a0; --t-search:#1f9a73; --t-dom:#8a4fd8; --t-math:#c4452f;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+html{overflow:hidden;}
+body{background:var(--bg);color:var(--fg);font:13px/1.2 var(--ui);border-radius:6px;contain:content;
+  margin:9px 12px 10px;padding:0;position:relative;overflow:hidden;white-space:nowrap;
+  box-shadow:0 2px 7px .5px rgba(0,0,0,.55);}
+body::after{border:.5px solid rgba(0,0,0,.35);border-radius:6px;inset:0;pointer-events:none;position:fixed;}
+.inactive{opacity:.6667;transition:opacity 167ms 33ms;}
+
+/* ---------- input bar: 40px tall (sizes #1 = 40 + 23 margins) ---------- */
+#bar{background:var(--bar);border-bottom:1px solid var(--line);contain:strict;font-size:0;height:26px;padding:7px 10px;position:relative;}
+#bar.empty{border-bottom:none;}
+#input{background:transparent;border:1px solid var(--line);border-radius:4px;box-sizing:border-box;color:var(--fg);
+  contain:strict;font:14px/24px var(--mono);height:26px;outline:none;padding:0 64px 0 8px;width:100%;caret-color:var(--accent);}
+#input:focus{border-color:var(--accent);}
+#toolbar{color:var(--faint);opacity:0;position:absolute;right:16px;top:10px;transition:opacity 120ms 80ms;}
+#toolbar,.label,.idx,#cols,#status{-webkit-user-select:none;user-select:none;}
+#toolbar:hover,.inactive #toolbar{opacity:1;}
+.button{contain:strict;cursor:default;display:inline-block;fill:currentColor;height:18px;margin-left:6px;stroke:currentColor;width:18px;border-radius:3px;}
+.button:hover{background:var(--hover);color:var(--fg);}
+#toggle-dark{stroke-linecap:round;stroke-linejoin:bevel;}.i-moon{fill:none;stroke-width:1.4;}
+.i-sun{stroke-width:2.1}#toggle-dark:not(.toggled) .i-sun,#toggle-dark.toggled .i-moon{visibility:hidden;}
+#close{stroke-linecap:round;stroke-linejoin:round;stroke-width:2.4;}
+
+/* ---------- shared column grid: index | type | title | url | age ---------- */
+#cols,.item{display:grid;grid-template-columns:2ch 12px minmax(0,1fr) minmax(0,40%) 3.5ch;column-gap:8px;align-items:center;padding:0 10px;}
+
+/* column header: 18px, only when there are results */
+#cols{height:18px;background:var(--bg);border-bottom:1px solid var(--line);box-sizing:border-box;
+  font:600 9.5px/18px var(--ui);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);}
+#cols span:last-child{text-align:right;}
+#bar.empty ~ #cols,#bar.empty ~ #status{display:none;}
+
+/* ---------- rows: 24px (sizes #3 = 24) ---------- */
+#list{background:var(--row);contain:content;}
+.item{box-sizing:border-box;contain:strict;height:24px;border-bottom:1px solid var(--line);position:relative;}
+.item.b{border-bottom:none;height:24px;}
+.item:hover{background:var(--hover);}
+.item.s{background:var(--sel);box-shadow:inset 2px 0 var(--accent);}
+.idx{font:11px/24px var(--mono);color:var(--faint);text-align:right;font-variant-numeric:tabular-nums;}
+.item.s .idx{color:var(--accent);font-weight:700;}
+.icon{width:12px;height:12px;fill:var(--t-hist);fill:var(--vc-c,var(--t-hist));background:0 0/12px no-repeat;}
+.tab,.math{stroke:var(--vc-c,var(--t-hist));stroke-width:5;fill:none;}
+.no-favicon .icon{background:none !important;}
+.item[data-type="tab"]{--vc-c:var(--t-tab);}
+.item[data-type="bookm"]{--vc-c:var(--t-bm);}
+.item[data-type="history"]{--vc-c:var(--t-hist);}
+.item[data-type="search"]{--vc-c:var(--t-search);}
+.item[data-type="domain"]{--vc-c:var(--t-dom);}
+.item[data-type="math"]{--vc-c:var(--t-math);}
+.top{overflow:hidden;text-overflow:ellipsis;font:13px/24px var(--ui);min-width:0;}
+.title{color:var(--fg);}
+.label{display:inline-block;margin-left:6px;padding:0 4px;border-radius:3px;font:600 9.5px/14px var(--ui);
+  letter-spacing:.04em;text-transform:uppercase;vertical-align:1px;color:var(--vc-c);background:var(--hover);}
+.bottom{overflow:hidden;text-overflow:ellipsis;min-width:0;}
+a{color:var(--muted);cursor:default;font:11.5px/24px var(--mono);text-decoration:none;}
+.mono-url a{font-family:var(--mono);}
+match{color:var(--fg);font-weight:700;}
+a match{color:var(--accent);font-weight:600;}
+.title>match{text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:2px;}
+.age{font:11px/24px var(--mono);color:var(--faint);text-align:right;font-variant-numeric:tabular-nums;overflow:hidden;}
+.time{display:none;}
+.relevancy{display:none;}
+
+/* ---------- status line: 20px (sizes #2 = 1 bar line + 18 cols + 20 status) ---------- */
+#status{display:flex;align-items:center;gap:10px;height:20px;padding:0 10px 0 0;background:var(--bar);
+  border-top:1px solid var(--line);box-sizing:border-box;font:11px/19px var(--mono);color:var(--muted);overflow:hidden;}
+#status .mode{background:var(--accent);color:var(--accent-fg);font-weight:700;padding:0 8px;text-transform:uppercase;letter-spacing:.06em;align-self:stretch;}
+#status .pos{color:var(--fg);font-variant-numeric:tabular-nums;}
+#status .cnt i{font-style:normal;color:var(--vc-c);}
+#status .url{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:right;direction:ltr;}
+#status .url b{color:var(--fg);font-weight:600;}
+
+/* ---------- icon shapes (also parsed by Vimium C on browsers without CSS d) ---------- */
+.tab{d:path("M2 22v36h44V22zm8 0v-8h44v36h-6m8 -8h6V6H18v6");}
+.math{d:path("M2 2h60v60H2zm8 8H54V22H10zm0 20h8v8h-8zm0 16h8v8h-8zm16 0h8v8h-8zm0-16h8v8h-8zm16 0h12v24H42z");}
+.bookm{d:path("M32 0l8 20 24 2-20 14 6 26-18-14-20 14 8-26L0 22l24-2");}
+.search{d:path("M46 41h-3l-1-1a24 24 1 1 0-2 2l1.1 1.1v3L59 64l5-5zm-10-4a18 18 0 1 1 1-1");}
+.domain{d:path("M4,16v4h4l12,36h4L32,32l8,24h4L56,20h4v-4H46v4h4L42,48L34,24h-4l-8,24L14,20h4v-4");}
+.history{d:path("M8 10.8A32 32 0 1 1 0 32h6a26 26 1 1 0 6.25-17L20 23H0V3zM28 18v21l15 8 4-5-13-7V18");}
+.less-motion .inactive,.less-motion #toolbar{transition:none;}
+</style>
+<style data-media="(forced-colors: active)" id="high-contrast">
+*{border-radius:0 !important;}body::after{content:"";border-radius:0;}
+.inactive,#toolbar{opacity:1;}#toggle-dark{display:none;}.btn_svg{stroke:#999;}:hover>.btn_svg{stroke:currentColor;}
+.item.s,.item:hover{outline:1px solid CanvasText;outline-offset:-1px;}.s>.top{font-weight:bold;}
+</style>
+<style id="dark">
+body{
+  --bg:#14171c; --bar:#1a1e25; --row:#181b21; --fg:#e3e6ec; --muted:#98a0ae; --faint:#646c7a;
+  --line:#262b34; --hover:#20252e; --sel:#22304f; --accent:#7ea0ff; --accent-fg:#0f1420;
+  --t-tab:#7ea0ff; --t-bm:#e3b04b; --t-hist:#8b93a3; --t-search:#4fc49c; --t-dom:#b48af0; --t-math:#f07a63;
+  box-shadow:0 2px 9px .5px rgba(0,0,0,.85);
+}
+body::after{border-color:#3a404c;}
+</style>
+<style id="time">.age{visibility:visible}</style>
+<style id="filtered">body::after{content:"";}body{box-shadow:none;}</style>
+</head>
+<body style="display: none;">
+<div id="bar">
+	<input type="text" id="input" spellcheck="false" autocomplete="off" autocapitalize="off"
+			inputmode="search" enterkeyhint="Go" />
+	<div id="toolbar">
+		<span role="button" class="button" id="toggle-dark" title="Toggle Dark"><svg class="btn_svg" viewBox="0 0 20 20">
+			<path class="i-moon" d="M5.4 3A7.2 7.3 0 1 1 5.4 17A6.4 7 0 1 0 5.4 3z"></path>
+			<circle class="i-sun" cx="10" cy="10" r="3.2"></circle><path class="i-sun"
+					d="M2 10h2m6 6v2m6-8h2M10 2v2M4.3 4.3l1.4 1.4M15.7 4.3l-1.4 1.4M4.3 15.7l1.4-1.4M14.3 14.3l1.4 1.4"></path>
+		</svg></span><span role="button" class="button" id="close" title="Close"><svg class="btn_svg" viewBox="0 0 20 20">
+			<path d="M6 6l8 8zM6 14L14 6"></path></svg></span>
+	</div>
+</div>
+<div id="cols" aria-hidden="true"><span>#</span><span></span><span>Title</span><span>URL</span><span>Age</span></div>
+<div id="list">
+	<script type="text/x-template" id="template">
+	<div class="item" data-type="{{e}}" data-visit="{{visit}}">
+		<span class="idx">{{index}}</span>
+		<svg class="icon{{level}}{{favIcon}}" viewBox="0 0 64 64"><path class="{{typeIcon}}"></path></svg>
+		<div class="top"><span class="title">{{title}}</span>{{label}}</div>
+		<div class="bottom"><a>{{textSplit}}</a></div>
+		<span class="age"></span><span class="time">{{time}}</span>
+	</div></script>
+</div>
+<div id="status" aria-live="polite"></div>
+
+<script src="vcid.js"></script>
+<script src="vomnibar.js"></script>
+<script src="dense.js"></script>
+</body>
+</html>

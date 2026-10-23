@@ -4,12 +4,19 @@ An information-dense custom Vomnibar page for [Vimium C](https://github.com/gdh1
 
 **Preview:** https://sejomacode.github.io/vomnibar-dense/
 
-## Use it
+## Install (Chrome)
 
-In Vimium C's Options, under **Advanced**:
+Vimium C on Chrome only loads a custom Vomnibar page that lives inside an extension, so Dense ships as a tiny unpacked extension in [`extension/`](extension).
 
-1. Set **Preferred Vomnibar page** to `https://sejomacode.github.io/vomnibar-dense/vomnibar.html`
-2. In the **Vomnibar settings** box (JSON), set `sizes` and add `time` to `styles`, keeping any other keys you already have:
+1. **Get the files.** Download this repo (Code → Download ZIP) and unzip it somewhere permanent.
+2. **Copy Vimium C's script into it.** Open
+   `chrome-extension://hfjbmagddngcpeloejdejnfgbamkjaeg/front/vomnibar.js`
+   in a tab, press Ctrl+S, and save it as `extension/front/vomnibar.js`.
+   This keeps the script matched to your installed Vimium C. Redo it after Vimium C updates.
+3. **Load the extension.** Go to `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the `extension` folder. Note the ID Chrome shows for "Dense Vomnibar for Vimium C".
+4. **Point Vimium C at it.** In Vimium C's Options, under **Advanced**:
+   - **Preferred Vomnibar page**: `chrome-extension://<Dense ID>/front/vomnibar.html`
+   - **Vomnibar settings** (JSON): set `sizes` and add `time` to `styles`, keeping any other keys:
 
 ```json
 {
@@ -20,15 +27,14 @@ In Vimium C's Options, under **Advanced**:
 }
 ```
 
+5. Reload any open tabs and press `o`.
+
 `sizes` matches the frame to this page's shorter bar and rows. `time` makes Vimium C send each result's visit time, which fills the age column.
 
 ## Notes
 
-- `data-version` in `vomnibar.html` must match your installed Vimium C. Compare it with
-  `view-source:chrome-extension://hfjbmagddngcpeloejdejnfgbamkjaeg/front/vomnibar.html`
-  (Chrome Web Store ID). If they differ, Vimium C falls back to its built-in bar.
-- Only `vomnibar.html` is needed. Vimium C injects its own `vomnibar.js` into the page.
-- On browser pages and sites with strict security policies, Vimium C uses its built-in bar.
-- Favicons don't load on a web-hosted page; colored type glyphs stand in for them.
+- `extension/front/vcid.js` holds Vimium C's extension ID. It's the Chrome Web Store ID by default; on Edge, replace it with the ID from `edge://extensions` (and use that ID in step 2).
+- `data-version` in `vomnibar.html` must match your Vimium C (compare with `view-source:chrome-extension://hfjbmagddngcpeloejdejnfgbamkjaeg/front/vomnibar.html`). If they differ, Vimium C falls back to its built-in bar.
+- On browser pages, the New Tab page and in incognito windows, Vimium C may still use its built-in bar.
 - Your `/* #omni */` Custom CSS still applies on top of this page.
-- Opening `vomnibar.html` directly in a tab shows a demo with sample results.
+- `vomnibar.html` at the repo root is the same design as a standalone web page. It powers the demo, but Vimium C on Chrome won't use a web-hosted page.

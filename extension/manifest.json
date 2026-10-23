@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Dense Vomnibar for Vimium C",
+  "version": "1.0.0",
+  "description": "An information-dense custom Vomnibar page for Vimium C.",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "front/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
