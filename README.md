@@ -8,11 +8,19 @@ An information-dense custom Vomnibar page for [Vimium C](https://github.com/gdh1
 
 In Vimium C's Options, under **Advanced**:
 
-| Setting | Value |
-| --- | --- |
-| Vomnibar page | `https://sejomacode.github.io/vomnibar-dense/vomnibar.html` |
-| Vomnibar sizes | `63,39,24,0.8,1944` |
-| Vomnibar styles | add `time` (e.g. `mono-url time`) so the age column has data |
+1. Set **Preferred Vomnibar page** to `https://sejomacode.github.io/vomnibar-dense/vomnibar.html`
+2. In the **Vomnibar settings** box (JSON), set `sizes` and add `time` to `styles`, keeping any other keys you already have:
+
+```json
+{
+  "maxMatches": 10,
+  "queryInterval": 333,
+  "sizes": "63,39,24,0.8,1944",
+  "styles": "mono-url time"
+}
+```
+
+`sizes` matches the frame to this page's shorter bar and rows. `time` makes Vimium C send each result's visit time, which fills the age column.
 
 ## Notes
 
