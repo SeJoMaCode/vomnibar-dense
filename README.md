@@ -33,7 +33,7 @@ Vimium C on Chrome only loads a custom Vomnibar page that lives inside an extens
 
 ## Notes
 
-- `extension/front/vcid.js` holds Vimium C's extension ID. It's the Chrome Web Store ID by default; on Edge, replace it with the ID from `edge://extensions` (and use that ID in step 2).
+- `extension/front/bridge.js` routes the page's connection to Vimium C and holds its extension ID (`VIMIUM_C_ID`). It's the Chrome Web Store ID by default; on Edge, replace it with the ID from `edge://extensions` (and use that ID in step 2).
 - `data-version` in `vomnibar.html` must match your Vimium C (compare with `view-source:chrome-extension://hfjbmagddngcpeloejdejnfgbamkjaeg/front/vomnibar.html`). If they differ, Vimium C falls back to its built-in bar.
 - On browser pages, the New Tab page and in incognito windows, Vimium C may still use its built-in bar.
 - Your `/* #omni */` Custom CSS still applies on top of this page.

@@ -8,6 +8,7 @@
 
   Vimium C on Chrome only accepts a custom Vomnibar page that lives inside an
   extension, so this folder is a tiny unpacked extension. See README.md.
+  bridge.js points Vimium C's script at Vimium C instead of this extension.
   vomnibar.js is NOT included: copy it from your installed Vimium C so the
   versions match (README step 1).
 -->
@@ -143,7 +144,7 @@ body::after{border-color:#3a404c;}
 </div>
 <div id="status" aria-live="polite"></div>
 
-<script src="vcid.js"></script>
+<script src="bridge.js"></script>
 <script src="vomnibar.js"></script>
 <script src="dense.js"></script>
 </body>
